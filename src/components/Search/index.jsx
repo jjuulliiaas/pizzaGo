@@ -1,7 +1,9 @@
-import React from "react";
-import styles from "./Search.module.scss";
+import React from 'react';
+import styles from './Search.module.scss';
+import { SeacrhContext } from '../../App';
 
-const Search = ({ searchValue, setSearchValue }) => {
+const Search = ({}) => {
+  const { searchValue, setSearchValue } = React.useContext(SeacrhContext);
   return (
     <div className={styles.root}>
       <svg
@@ -21,13 +23,13 @@ const Search = ({ searchValue, setSearchValue }) => {
       </svg>
       <input
         value={searchValue}
-        onChange={(event) => setSearchValue(event.target.value)}
+        onChange={event => setSearchValue(event.target.value)}
         className={styles.input}
         placeholder="Пошук смачної піци..."
       />
       {searchValue && (
         <svg
-          onClick={() => setSearchValue("")}
+          onClick={() => setSearchValue('')}
           className={styles.clearIcon}
           viewBox="0 0 24 24"
           xmlns="http://www.w3.org/2000/svg"
