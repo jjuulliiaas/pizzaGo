@@ -14,6 +14,7 @@ function Sort({ value, onChangeSort }) {
     setOpen(false);
   };
   return (
+  
     <div className="sort">
       <div className="sort__label">
         <svg
