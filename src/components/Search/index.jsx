@@ -1,14 +1,38 @@
 import React from 'react';
+import debounce from 'lodash.debounce';
 import styles from './Search.module.scss';
-import { SeacrhContext } from '../../App';
+import { SearchContext } from '../../App';
 
-const Search = ({}) => {
-  const { searchValue, setSearchValue } = React.useContext(SeacrhContext);
+const Search = () => {
+  const [value, setValue] = React.useState('');
+  const { setSearchValue } = React.useContext(SearchContext);
+  const inputRef = React.useRef();
+
+  const onClickClear = () => {
+    setSearchValue('');
+    setValue('');
+    inputRef.current.focus();
+  };
+
+  // Используем useMemo для предотвращения пересоздания debounce при каждом рендере
+  const updateSearchValue = React.useMemo(
+    () =>
+      debounce(str => {
+        setSearchValue(str);
+      }, 250),
+    [setSearchValue] // Добавляем зависимости, если setSearchValue изменится
+  );
+
+  const onChangeInput = event => {
+    setValue(event.target.value);
+    updateSearchValue(event.target.value);
+  };
+
   return (
     <div className={styles.root}>
       <svg
         className={styles.icon}
-        enable-background="new 0 0 32 32"
+        enableBackground="new 0 0 32 32"
         height="32px"
         id="Layer_1"
         version="1.1"
@@ -22,14 +46,15 @@ const Search = ({}) => {
         </g>
       </svg>
       <input
-        value={searchValue}
-        onChange={event => setSearchValue(event.target.value)}
+        ref={inputRef}
+        value={value}
+        onChange={onChangeInput}
         className={styles.input}
         placeholder="Пошук смачної піци..."
       />
-      {searchValue && (
+      {value && (
         <svg
-          onClick={() => setSearchValue('')}
+          onClick={onClickClear}
           className={styles.clearIcon}
           viewBox="0 0 24 24"
           xmlns="http://www.w3.org/2000/svg"

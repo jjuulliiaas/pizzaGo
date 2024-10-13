@@ -1,18 +1,23 @@
 import React from 'react';
+
+import { Route, Routes } from 'react-router-dom';
+
 import Header from './components/Header';
+
 import Home from './Pages/Home';
 import NotFound from './Pages/NotFound';
 import Cart from './Pages/Cart';
-import { Route, Routes } from 'react-router-dom';
+
 import './scss/app.scss';
 
-export const SeacrhContext = React.createContext();
+export const SearchContext = React.createContext();
 
 function App() {
   const [searchValue, setSearchValue] = React.useState('');
+
   return (
     <div className="wrapper">
-      <SeacrhContext.Provider value={{ searchValue, setSearchValue }}>
+      <SearchContext.Provider value={{ searchValue, setSearchValue }}>
         <Header />
         <div className="content">
           <Routes>
@@ -21,7 +26,7 @@ function App() {
             <Route path="/*" element={<NotFound />} />
           </Routes>
         </div>
-      </SeacrhContext.Provider>
+      </SearchContext.Provider>
     </div>
   );
 }
