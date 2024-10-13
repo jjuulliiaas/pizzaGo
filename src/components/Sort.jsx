@@ -2,12 +2,12 @@ import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { setSort } from '../redux/slices/filterSlice';
 
-const list = [
-  { name: 'від дорогих до дешевих', sortProperty: 'price' },
-  { name: 'від дешевих до дорогих', sortProperty: '-price' },
-  { name: 'спочаку популярні', sortProperty: 'rating' },
-  { name: 'спочатку акційні', sortProperty: '-rating' },
-  { name: 'за назвою', sortProperty: '-title' },
+export const sortList = [
+  { name: 'від дешевих до дорогих', sortProperty: 'price' },
+  { name: 'від дорогих до дешевих', sortProperty: '-price' },
+  { name: 'спочатку акційні', sortProperty: 'rating' },
+  { name: 'спочатку популярні', sortProperty: '-rating' },
+  { name: 'за назвою', sortProperty: 'title' },
 ];
 
 function Sort() {
@@ -17,9 +17,26 @@ function Sort() {
   const [open, setOpen] = React.useState(false);
 
   const onClickListItem = obj => {
-    dispatch(setSort(obj));
+    if (sort.sortProperty !== obj.sortProperty) {
+      // Проверка на выбор того же элемента
+      dispatch(setSort(obj));
+    }
     setOpen(false);
   };
+
+  // Закрытие выпадающего меню при клике вне его
+  const handleClickOutside = event => {
+    if (event.target.closest('.sort') === null) {
+      setOpen(false);
+    }
+  };
+
+  React.useEffect(() => {
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, []);
 
   return (
     <div className="sort">
@@ -40,13 +57,15 @@ function Sort() {
         <span onClick={() => setOpen(!open)}>{sort.name}</span>
       </div>
       {open && (
-        <div className="sort__popup">
+        <div className="sort__popup" role="menu">
           <ul>
-            {list.map((obj, i) => (
+            {sortList.map(obj => (
               <li
-                key={i}
+                key={obj.sortProperty} // Изменено на уникальный ключ
                 onClick={() => onClickListItem(obj)}
                 className={sort.sortProperty === obj.sortProperty ? 'active' : ''}
+                role="menuitem" // Атрибут для доступности
+                tabIndex={0} // Добавлен атрибут для фокусировки
               >
                 {obj.name}
               </li>
@@ -57,4 +76,5 @@ function Sort() {
     </div>
   );
 }
+
 export default Sort;
