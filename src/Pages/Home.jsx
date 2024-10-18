@@ -10,6 +10,7 @@ import PizzaBlock from '../components/PizzaBlock/index';
 import Skeleton from '../components/PizzaBlock/Skeleton';
 import Pagination from '../components/Pagination';
 import { SearchContext } from '../App';
+import NotFoundBlock from '../components/NotFoundBlock';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -107,7 +108,13 @@ const Home = () => {
       </div>
       <h2 className="content__title">Усі піци</h2>
       <div className="content__items">
-        {isLoading ? skeletons : pizzas.length > 0 ? pizzas : <p>Нічого не знайдено</p>}
+        {isLoading ? (
+          skeletons
+        ) : pizzas.length > 0 ? (
+          pizzas
+        ) : (
+          <h3>На жаль нічого не знайдено</h3>
+        )}
       </div>
       <Pagination currentPage={currentPage} onChangePage={onChangePage} />
     </div>
