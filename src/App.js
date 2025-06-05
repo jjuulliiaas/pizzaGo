@@ -1,26 +1,22 @@
 import React from 'react';
-
-import { Route, Routes } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { store } from './redux/store';
 
 import Header from './components/Header';
-
 import Home from './Pages/Home';
-import NotFound from './Pages/NotFound';
 import Cart from './Pages/Cart';
+import NotFound from './Pages/NotFound';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import Profile from './components/Profile/Profile';
 
 import './scss/app.scss';
 
-export const SearchContext = React.createContext();
-
 function App() {
-  const [searchValue, setSearchValue] = React.useState('');
-
   return (
-    <div className="wrapper">
-      <SearchContext.Provider value={{ searchValue, setSearchValue }}>
+    <Provider store={store}>
+      <div className="wrapper">
         <Header />
         <div className="content">
           <Routes>
@@ -29,11 +25,11 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/*" element={<NotFound />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
-      </SearchContext.Provider>
-    </div>
+      </div>
+    </Provider>
   );
 }
 

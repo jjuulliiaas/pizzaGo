@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Search from '../Search';
 import styles from './Profile.module.scss';
 
 const Profile = () => {
   const [orders, setOrders] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('createdAt');
+  const [searchValue, setSearchValue] = useState('');
+  const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
 
   const user = JSON.parse(localStorage.getItem('user'));
 
@@ -18,87 +19,87 @@ const Profile = () => {
 
   const fetchOrders = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `http://localhost:5000/api/orders?search=${searchTerm}&sortBy=${sortBy}&sortOrder=${sortOrder}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      const response = await axios.get('http://localhost:5000/api/orders', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          sortBy,
+          sortOrder,
+        },
+      });
       setOrders(response.data);
-      setLoading(false);
+      setError(null);
     } catch (err) {
-      setError('Failed to fetch orders');
+      setError('Помилка при завантаженні замовлень');
+      console.error('Error fetching orders:', err);
+    } finally {
       setLoading(false);
     }
   };
 
   const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const handleSearchSubmit = (e) => {
     e.preventDefault();
-    fetchOrders();
+    const filteredOrders = orders.filter((order) =>
+      order.items.some((item) =>
+        item.name.toLowerCase().includes(searchValue.toLowerCase())
+      )
+    );
+    setOrders(filteredOrders);
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('uk-UA', {
+    const options = {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
-    });
+      minute: '2-digit',
+    };
+    return new Date(dateString).toLocaleDateString('uk-UA', options);
   };
 
-  if (loading) return <div className={styles.loading}>Loading...</div>;
-  if (error) return <div className={styles.error}>{error}</div>;
+  if (loading) {
+    return <div className={styles.loading}>Завантаження...</div>;
+  }
+
+  if (error) {
+    return <div className={styles.error}>{error}</div>;
+  }
 
   return (
-    <div className={styles.profileContainer}>
+    <div className={styles.profile}>
       <div className={styles.header}>
-        <h2>Welcome, {user?.name}</h2>
-        <p>Email: {user?.email}</p>
-      </div>
-
-      <div className={styles.searchSection}>
-        <form onSubmit={handleSearchSubmit} className={styles.searchForm}>
-          <input
-            type="text"
-            placeholder="Search orders..."
-            value={searchTerm}
-            onChange={handleSearch}
-            className={styles.searchInput}
-          />
-          <button type="submit" className={styles.searchButton}>
-            Search
-          </button>
-        </form>
-
+        <h1>Мій профіль</h1>
+        <div className={styles.searchSection}>
+          <form onSubmit={handleSearch}>
+            <Search searchValue={searchValue} setSearchValue={setSearchValue} />
+            <button type="submit" className={styles.searchButton}>
+              Пошук
+            </button>
+          </form>
+        </div>
         <div className={styles.sortControls}>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
             className={styles.sortSelect}
           >
-            <option value="createdAt">Date</option>
-            <option value="totalPrice">Price</option>
+            <option value="date">За датою</option>
+            <option value="price">За ціною</option>
           </select>
-          <select
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value)}
-            className={styles.sortSelect}
+          <button
+            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+            className={styles.sortButton}
           >
-            <option value="desc">Descending</option>
-            <option value="asc">Ascending</option>
-          </select>
+            {sortOrder === 'asc' ? '↑' : '↓'}
+          </button>
         </div>
       </div>
 
-      <div className={styles.ordersList}>
+      <div className={styles.orders}>
         {orders.length === 0 ? (
-          <p className={styles.noOrders}>No orders found</p>
+          <p className={styles.noOrders}>У вас ще немає замовлень</p>
         ) : (
           orders.map((order) => (
             <div key={order._id} className={styles.orderCard}>
@@ -111,15 +112,15 @@ const Profile = () => {
               <div className={styles.orderItems}>
                 {order.items.map((item, index) => (
                   <div key={index} className={styles.orderItem}>
-                    <span>{item.name}</span>
-                    <span>{item.quantity}x</span>
-                    <span>${item.price}</span>
+                    <span className={styles.itemName}>{item.name}</span>
+                    <span className={styles.itemQuantity}>x{item.quantity}</span>
+                    <span className={styles.itemPrice}>{item.price} ₴</span>
                   </div>
                 ))}
               </div>
               <div className={styles.orderFooter}>
                 <span className={styles.totalPrice}>
-                  Total: ${order.totalPrice}
+                  Загальна сума: {order.totalPrice} ₴
                 </span>
               </div>
             </div>
