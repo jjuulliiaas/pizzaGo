@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import axios from 'axios';
 import styles from './Auth.module.scss';
+import { API_URL } from '../../config';
+import { setUser, setToken } from '../../redux/slices/userSlice';
 
 const Register = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     name: ''
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  console.log('API_URL:', API_URL);
 
   const handleChange = (e) => {
     setFormData({
@@ -21,13 +28,24 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/register', formData);
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      const response = await axios.post(`${API_URL}/api/auth/register`, formData);
+      console.log('Registration response:', response);
+      dispatch(setToken(response.data.token));
+      dispatch(setUser(response.data.user));
       navigate('/profile');
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed');
+      console.error('Registration error:', err);
+      if (err.response) {
+        console.log('Error response data:', err.response.data);
+        setError(err.response.data.error || 'Registration failed');
+      } else {
+        setError('Network error. Please try again.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -69,7 +87,9 @@ const Register = () => {
             required
           />
         </div>
-        <button type="submit" className={styles.submitButton}>Register</button>
+        <button type="submit" className={styles.submitButton} disabled={loading}>
+          {loading ? 'Loading...' : 'Register'}
+        </button>
       </form>
     </div>
   );

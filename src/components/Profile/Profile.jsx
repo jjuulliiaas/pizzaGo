@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import Search from '../Search';
 import styles from './Profile.module.scss';
+import { API_URL } from '../../config';
+import emptyCartImg from '../../assets/img/empty-cart.png';
 
 const Profile = () => {
   const [orders, setOrders] = useState([]);
-  const [searchValue, setSearchValue] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
     fetchOrders();
@@ -19,47 +18,66 @@ const Profile = () => {
 
   const fetchOrders = async () => {
     try {
-      setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/orders', {
-        headers: { Authorization: `Bearer ${token}` },
-        params: {
-          sortBy,
-          sortOrder,
+      if (!token) {
+        setError('Будь ласка, увійдіть в систему');
+        setIsLoading(false);
+        return;
+      }
+
+      const response = await axios.get(`${API_URL}/api/orders`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
       });
-      setOrders(response.data);
-      setError(null);
+
+      const sortedOrders = response.data.sort((a, b) => {
+        if (sortBy === 'date') {
+          return sortOrder === 'desc'
+            ? new Date(b.createdAt) - new Date(a.createdAt)
+            : new Date(a.createdAt) - new Date(b.createdAt);
+        } else if (sortBy === 'price') {
+          return sortOrder === 'desc' ? b.totalPrice - a.totalPrice : a.totalPrice - b.totalPrice;
+        }
+        return 0;
+      });
+
+      setOrders(sortedOrders);
+      setIsLoading(false);
     } catch (err) {
-      setError('Помилка при завантаженні замовлень');
-      console.error('Error fetching orders:', err);
-    } finally {
-      setLoading(false);
+      setError(err.response?.data?.message || 'Помилка при завантаженні замовлень');
+      setIsLoading(false);
     }
   };
 
   const handleSearch = (e) => {
-    e.preventDefault();
-    const filteredOrders = orders.filter((order) =>
-      order.items.some((item) =>
-        item.name.toLowerCase().includes(searchValue.toLowerCase())
-      )
-    );
-    setOrders(filteredOrders);
+    setSearchTerm(e.target.value);
+  };
+
+  const handleSort = (type) => {
+    if (sortBy === type) {
+      setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+    } else {
+      setSortBy(type);
+      setSortOrder('desc');
+    }
   };
 
   const formatDate = (dateString) => {
-    const options = {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    };
+    const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
     return new Date(dateString).toLocaleDateString('uk-UA', options);
   };
 
-  if (loading) {
+  const filteredOrders = orders.filter((order) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      order.items.some((item) => (item.title ? item.title.toLowerCase().includes(searchLower) : false)) ||
+      (order._id ? order._id.toLowerCase().includes(searchLower) : false) ||
+      (order.createdAt ? formatDate(order.createdAt).toLowerCase().includes(searchLower) : false)
+    );
+  });
+
+  if (isLoading) {
     return <div className={styles.loading}>Завантаження...</div>;
   }
 
@@ -71,57 +89,58 @@ const Profile = () => {
     <div className={styles.profile}>
       <div className={styles.header}>
         <h1>Мій профіль</h1>
-        <div className={styles.searchSection}>
-          <form onSubmit={handleSearch}>
-            <Search searchValue={searchValue} setSearchValue={setSearchValue} />
-            <button type="submit" className={styles.searchButton}>
-              Пошук
-            </button>
-          </form>
+        <div className={styles.search}>
+          <input
+            type="text"
+            placeholder="Пошук замовлень..."
+            value={searchTerm}
+            onChange={handleSearch}
+          />
         </div>
-        <div className={styles.sortControls}>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className={styles.sortSelect}
-          >
-            <option value="date">За датою</option>
-            <option value="price">За ціною</option>
-          </select>
+        <div className={styles.sort}>
           <button
-            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-            className={styles.sortButton}
+            className={`${styles.sortButton} ${sortBy === 'date' ? styles.active : ''}`}
+            onClick={() => handleSort('date')}
           >
-            {sortOrder === 'asc' ? '↑' : '↓'}
+            За датою {sortBy === 'date' && (sortOrder === 'desc' ? '↓' : '↑')}
+          </button>
+          <button
+            className={`${styles.sortButton} ${sortBy === 'price' ? styles.active : ''}`}
+            onClick={() => handleSort('price')}
+          >
+            За ціною {sortBy === 'price' && (sortOrder === 'desc' ? '↓' : '↑')}
           </button>
         </div>
       </div>
 
       <div className={styles.orders}>
-        {orders.length === 0 ? (
-          <p className={styles.noOrders}>У вас ще немає замовлень</p>
+        {filteredOrders.length === 0 ? (
+          <div className={styles.noOrders}>
+            <img src={emptyCartImg} alt="Немає замовлень" style={{width: '200px', marginBottom: '20px'}} />
+            <p>Замовлень не знайдено</p>
+          </div>
         ) : (
-          orders.map((order) => (
-            <div key={order._id} className={styles.orderCard}>
+          filteredOrders.map((order) => (
+            <div key={order._id} className={styles.order}>
               <div className={styles.orderHeader}>
-                <span className={styles.orderDate}>
-                  {formatDate(order.createdAt)}
-                </span>
+                <span className={styles.orderId}>Замовлення #{order._id}</span>
+                <span className={styles.orderDate}>{formatDate(order.createdAt)}</span>
                 <span className={styles.orderStatus}>{order.status}</span>
               </div>
               <div className={styles.orderItems}>
-                {order.items.map((item, index) => (
-                  <div key={index} className={styles.orderItem}>
-                    <span className={styles.itemName}>{item.name}</span>
-                    <span className={styles.itemQuantity}>x{item.quantity}</span>
-                    <span className={styles.itemPrice}>{item.price} ₴</span>
+                {order.items.map((item) => (
+                  <div key={item._id || item.name} className={styles.orderItem}>
+                    <img src={item.imageUrl || emptyCartImg} alt={item.title || 'Pizza'} />
+                    <div className={styles.itemDetails}>
+                      <h3>{item.title || item.name}</h3>
+                      <p>Кількість: {item.count || item.quantity}</p>
+                      <p>Ціна: {item.price} ₴</p>
+                    </div>
                   </div>
                 ))}
               </div>
-              <div className={styles.orderFooter}>
-                <span className={styles.totalPrice}>
-                  Загальна сума: {order.totalPrice} ₴
-                </span>
+              <div className={styles.orderTotal}>
+                Загальна сума: {order.totalPrice} ₴
               </div>
             </div>
           ))

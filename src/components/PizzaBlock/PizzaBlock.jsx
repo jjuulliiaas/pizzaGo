@@ -21,6 +21,8 @@ const PizzaBlock = ({ id, title, price, imageUrl, sizes, types }) => {
     dispatch(addItem(item));
   };
 
+  console.log('PizzaBlock imageUrl:', imageUrl);
+
   return (
     <div className="pizza-block">
       <img className="pizza-block__image" src={imageUrl} alt="Pizza" />

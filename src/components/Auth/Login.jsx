@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import axios from 'axios';
 import styles from './Auth.module.scss';
+import { API_URL } from '../../config';
+import { setUser, setToken } from '../../redux/slices/userSlice';
 
 const Login = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -20,13 +25,24 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', formData);
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      const response = await axios.post(`${API_URL}/api/auth/login`, formData);
+      console.log('Login response:', response);
+      dispatch(setToken(response.data.token));
+      dispatch(setUser(response.data.user));
       navigate('/profile');
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed');
+      console.error('Login error:', err);
+      if (err.response) {
+        console.log('Error response data:', err.response.data);
+        setError(err.response.data.error || 'Login failed');
+      } else {
+        setError('Network error. Please try again.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -57,7 +73,9 @@ const Login = () => {
             required
           />
         </div>
-        <button type="submit" className={styles.submitButton}>Login</button>
+        <button type="submit" className={styles.submitButton} disabled={loading}>
+          {loading ? 'Loading...' : 'Login'}
+        </button>
       </form>
     </div>
   );

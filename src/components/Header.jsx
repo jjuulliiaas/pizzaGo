@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import logo from '../assets/img/pizza-logo.svg';
 
 const Header = () => {
   const { items, totalPrice } = useSelector((state) => state.cart);
   const [user, setUser] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -18,6 +19,7 @@ const Header = () => {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     setUser(null);
+    navigate('/');
   };
 
   const totalCount = items.reduce((sum, item) => sum + item.count, 0);

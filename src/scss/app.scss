@@ -187,6 +187,7 @@ body {
       display: flex;
       align-items: center;
       margin-right: 15px;
+      flex-shrink: 0;
 
       b {
         margin: 0 10px;
@@ -203,6 +204,8 @@ body {
         border: 2px solid #fe5f1e;
         background: transparent;
         cursor: pointer;
+        padding: 0;
+        min-width: 0;
 
         svg {
           width: 10px;
@@ -234,6 +237,7 @@ body {
       align-items: center;
       justify-content: center;
       margin-right: 15px;
+      flex-shrink: 0;
 
       b {
         font-weight: 700;
@@ -246,6 +250,7 @@ body {
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0;
 
       button {
         display: flex;
@@ -413,6 +418,12 @@ body {
       font-size: 18px;
     }
   }
+
+  &__items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
 }
 
 .header {
@@ -564,4 +575,15 @@ body {
       opacity: 0.8;
     }
   }
+}
+
+.error-message {
+  text-align: center;
+  color: #ff4d4f;
+  padding: 20px;
+  background-color: #fff2f0;
+  border: 1px solid #ffccc7;
+  border-radius: 10px;
+  margin: 20px 0;
+  font-size: 16px;
 }
